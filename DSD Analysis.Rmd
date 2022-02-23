@@ -1,0 +1,748 @@
+---
+title: "DSD data analysis"
+author: "Nelly"
+date: "2/17/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(pacman)
+pacman::p_load(tidyverse, # Manipulate data
+               sjPlot, # make chi-square test table
+               gmodels, # mosaic plot
+               lubridate) # Date manipulation
+
+
+library(dplyr)
+library(blorr)
+library(aod)
+library(ggplot2)
+library(readxl)
+library(stringr)
+library(scales)
+library(reprex)
+library(ggcorrplot)
+library(rcompanion)
+
+```
+## 
+
+
+ Load Data 
+```{r}
+X2_DSD_Final_Analysis <- read_excel("2-DSD Final Analysis.xlsx")
+
+df<-X2_DSD_Final_Analysis
+
+```
+Global Variables 
+```{r}
+curr_year <- 2022
+```
+
+
+
+
+
+ ## data cleaning 
+```{r}
+#spliting organization
+df <-df %>% 
+  tidyr::separate(Organisation, sep = " / ", into = c("Region", "SNU", "PSNU", "Facility"))
+table(df$Region)
+```
+
+ 
+ 
+ #Recode variables- Gender 
+```{r}
+
+df$Gender = as.factor(df$Gender)
+df$Gender = recode(df$Gender,
+                          '1' = "Male",
+                          '2' = "Female"
+)     
+```
+ 
+  
+```{r}
+df$TXDuration    = as.factor(df$TXDuration)
+df$TXDuration = recode(df$TXDuration,
+                          '1' = "Less than 3 months ",
+                          '2' = "Between 3 and 6 months",
+                          '3' = "Between 6 months and a Year",
+                          '4' = "More than an Year"
+)   
+```
+ 
+```{r}
+df$VLC = as.factor(df$VLC)
+df$VLC = recode(df$VLC,
+                          '1' = "Yes ",
+                          '2' = "No"
+)  
+```
+
+ 
+```{r}
+df$VLS = as.factor(df$VLS)
+df$VLS = recode(df$VLS,
+                          '1' = "Yes ",
+                          '2' = "No"
+)  
+```
+ 
+
+```{r}
+df$IIT = as.factor(df$IIT)
+df$IIT = recode(df$IIT,
+                          '1' = "Yes ",
+                          '2' = "No"
+)  
+```
+ 
+
+ 
+```{r}
+df$Person_administered = as.factor(df$Person_administered)
+df$Person_administered = recode(df$Person_administered,
+                          '1' = "Client",
+                          '2' = "Caretaker"
+) 
+```
+ 
+```{r}
+df$MMD_last_visit = as.factor(df$MMD_last_visit)
+df$MMD_last_visit = recode(df$MMD_last_visit,
+                          '1' = "Less than one month if ART ",
+                          '2' = "1-2 Months",
+                          '3' = "3-5 months ",
+                          '4' = "6+ months"
+) 
+```
+ 
+ 
+```{r}
+df$preferred_MMD= as.factor(df$preferred_MMD)
+df$preferred_MMD = recode(df$preferred_MMD,
+                          '1' = "Less than one month if ART ",
+                          '2' = "1-2 Months",
+                          '3' = "3-5 months ",
+                          '4' = "6+ months"
+) 
+```
+
+
+```{r}
+df$Current_ARV_Deivery_Model = as.factor(df$Current_ARV_Deivery_Model)
+df$Current_ARV_Deivery_Model = recode(df$Current_ARV_Deivery_Model,
+                          '1' = "Facility Based individual management",
+                          '2' = "Facility based group ",
+                          '3' = "facility track refill ",
+                          '4' = "Community Led ART Delivery ",
+                          '5' = "community Pharmacy",
+                          '6' =" other "
+) 
+```
+
+
+```{r}
+df$ISCurrent_PrefDSD = as.factor(df$ISCurrent_PrefDSD)
+df$ISCurrent_PrefDSD = recode(df$ISCurrent_PrefDSD,
+                          '1' = "Yes ",
+                          '2' = "No"
+)
+```
+ 
+ 
+```{r}
+
+df$Preferred_DSD = as.factor(df$Preferred_DSD)
+df$Preferred_DSD = recode(df$Preferred_DSD,
+                          '1' = "Facility Based individual management",
+                          '2' = "Facility based group ",
+                          '3' = "Facility track refill ",
+                          '4' = "Community Led ART Delivery ",
+                          '5' = "community drug distribution",
+                          '6' = "Community Pharmacy ",
+                          '7' = "Other"
+) 
+
+```
+ 
+```{r}
+df$CHW_Present = as.factor(df$CHW_Present)
+df$CHW_Present = recode(df$CHW_Present,
+                          '1' = "Yes ",
+                          '2' = "No"
+)  
+```
+ 
+```{r}
+df$CHW_Follow_Up = as.factor(df$CHW_Follow_Up)
+df$CHW_Follow_Up = recode(df$CHW_Follow_Up,
+                          '1' = "Yes ",
+                          '2' = "No"
+)  
+```
+
+
+```{r}
+df$`Contacted for follow-up` = as.factor(df$`Contacted for follow-up`)
+df$`Contacted for follow-up` = recode(df$`Contacted for follow-up`,
+                          '1' = "Yes ",
+                          '2' = "No"
+)  
+```
+#diving the data by peds and adults 
+## use age bands instead 
+  CLient age to peds and Adults
+
+```{r}
+df <- df %>%  
+  mutate(agecoarse = if_else(Current_CLIENTAGE  < 15, "<15", "15+"))
+table(df$agecoarse)
+```
+
+
+
+
+```{r}
+df$Current_CLIENTAGE = cut(df$Current_CLIENTAGE,
+                   breaks = c(0,4,9,14,19,24,29,34,39,44,49,100),
+                   labels = c("0-04","05-09","10-14","15-19", "20-24", "25-29", "30-34", "35-39","40-44", "45-49","50+"))
+table(df$Current_CLIENTAGE)
+
+```
+
+
+
+
+
+
+#   creating categories out of  HIV Diagnosis Year 
+
+```{r}
+
+#str(df$HIV_DIagnosisYear)
+df <- df %>% 
+  mutate(TimewHIV= 2022-(HIV_DIagnosisYear))
+
+#curr_year <- 2022( assign Global variable)
+df$TimewHIV = cut(df$TimewHIV,
+                   breaks = c(0,10,20,40),
+                   labels = c("01-09","10-19","20+"))
+table(df$TimewHIV)
+
+```
+
+#distribution by age and gender 
+
+```{r}
+#Gender_age <- xtabs(~Current_CLIENTAGE+Gender, data = df) 
+#view(Gender_age)
+```
+#Frequencies 
+# visualizing distributions 
+```{r}
+ggplot(data = df) +
+  geom_bar(mapping = aes(x = Current_CLIENTAGE))
+df
+```
+
+
+```{r}
+ggplot(data = df) +
+  geom_bar(mapping = aes(x = agecoarse))
+
+```
+
+
+
+
+```{r}
+ggplot(data = df) +
+  geom_bar(mapping = aes(x = Gender))
+
+```
+
+
+```{r}
+ggplot(data = df) +
+  geom_histogram(mapping = aes(x = HIV_DIagnosisYear), binwidth = 0.5)
+
+```
+
+# how many patients are recieving ARVs using their most prefered Method of dispensation 
+```{r}
+
+ggplot(data = df) +
+  geom_bar(mapping = aes(x = Preferred_DSD))
+
+```
+```{r}
+ggplot(data = df) +
+  geom_bar(mapping = aes(x =ISCurrent_PrefDSD))
+```
+
+
+
+
+
+```{r}
+ggplot(data = df) +
+  geom_bar(mapping = aes(x = IIT))
+```
+
+```{r}
+ggplot(data = df) +
+  geom_bar(mapping = aes(x = MMD_last_visit))
+```
+
+```{r}
+mosaicplot(preferred_MMD ~ MMD_last_visit ,data = df)
+
+```
+
+
+```{r}
+mosaicplot(Region ~ IIT ,data = df)
+```
+
+```{r}
+mosaicplot(agecoarse ~ IIT ,data = df)
+```
+
+
+
+```{r}
+mosaicplot(agecoarse ~ VLS ,data = df)
+```
+
+
+
+
+```{r}
+mosaicplot(Preferred_DSD ~ IIT ,data = df)
+```
+
+
+
+```{r}
+mosaicplot(Preferred_DSD ~ Current_ARV_Deivery_Model ,data = df)
+```
+
+#  Reg
+
+
+
+#Statistical analysis 
+
+```{r}
+df %>%
+  select(Current_CLIENTAGE, VLS) %>% 
+  sjtab(fun = "xtab", var.labels=c("Current_CLIENTAGE", "VLS"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+
+ 
+ 
+ 
+```{r}
+df %>%
+  select(Gender, VLS) %>% 
+  sjtab(fun = "xtab", var.labels=c("Gender", "VLS"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+
+```
+
+
+```{r}
+df %>%
+  select(Region, VLS) %>% 
+  sjtab(fun = "xtab", var.labels=c("Region", "VLS"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+
+
+```{r}
+df %>%
+  select(IIT, VLS) %>% 
+  sjtab(fun = "xtab", var.labels=c("IIT", "VLS"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+
+
+
+```{r}
+df %>%
+  select(CHW_Present, VLS) %>% 
+  sjtab(fun = "xtab", var.labels=c("CHW_Present", "VLS"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+
+```{r}
+
+df %>%
+  select(TXDuration, VLS) %>% 
+  sjtab(fun = "xtab", var.labels=c("TXDuration", "VLS"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+
+```
+
+```{r}
+df %>%
+  select(VLC, VLS) %>% 
+  sjtab(fun = "xtab", var.labels=c("VLC", "VLS"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+
+
+
+```{r}
+df %>%
+  select(MMD_last_visit, VLS) %>% 
+  sjtab(fun = "xtab", var.labels=c("MMD_last_visit", "VLS"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+
+```{r}
+df %>%
+  select(TimewHIV, VLS) %>% 
+  sjtab(fun = "xtab", var.labels=c("TimewHIV", "VLS"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+
+
+
+```{r}
+logit.fit_1 = glm(VLS ~ Current_CLIENTAGE + Gender + Region + IIT + TXDuration + MMD_last_visit + TimewHIV,  data = df, family = "binomial")
+summary(logit.fit_1)
+```
+
+```{r}
+cbind(exp(coefficients(logit.fit_1)), exp(confint(logit.fit_1)))
+```
+
+
+ VLC
+ 
+```{r}
+df %>%
+  select(MMD_last_visit,VLC ) %>% 
+  sjtab(fun = "xtab", var.labels=c("MMD_last_visit", "VLC"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+
+ 
+```{r}
+df %>%
+  select(Gender,VLC ) %>% 
+  sjtab(fun = "xtab", var.labels=c("Gender", "VLC"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+ 
+ 
+ 
+```{r}
+df %>%
+  select(Current_CLIENTAGE,VLC ) %>% 
+  sjtab(fun = "xtab", var.labels=c("Current_CLIENTAGE", "VLC"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+ 
+```{r}
+df %>%
+  select(Region,VLC ) %>% 
+  sjtab(fun = "xtab", var.labels=c("Region", "VLC"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+ 
+
+```{r}
+df %>%
+  select(IIT,VLC ) %>% 
+  sjtab(fun = "xtab", var.labels=c("IIT", "VLC"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+
+
+```{r}
+df %>%
+  select(CHW_Present,VLC ) %>% 
+  sjtab(fun = "xtab", var.labels=c("CHW_Present", "VLC"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+ 
+ 
+```{r}
+df %>%
+  select(TXDuration,VLC ) %>% 
+  sjtab(fun = "xtab", var.labels=c("TXDuration", "VLC"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+ 
+ 
+```{r}
+df %>%
+  select(VLS,VLC ) %>% 
+  sjtab(fun = "xtab", var.labels=c("VLS", "VLC"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+ 
+```{r}
+df %>%
+  select(TimewHIV,VLC ) %>% 
+  sjtab(fun = "xtab", var.labels=c("TimewHIV", "VLC"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+
+
+
+```{r}
+logit.fit_2 = glm(VLC ~ Current_CLIENTAGE + VLS + Region + IIT + TXDuration + MMD_last_visit + TimewHIV,  data = df, family = "binomial")
+summary(logit.fit_2)
+```
+
+
+```{r}
+cbind(exp(coefficients(logit.fit_2)), exp(confint(logit.fit_2)))
+```
+ 
+  CHW Present 
+  
+```{r}
+df %>%
+  select(MMD_last_visit,CHW_Present ) %>% 
+  sjtab(fun = "xtab", var.labels=c("MMD_last_visit", "CHW_Present"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+ 
+ 
+
+
+```{r}
+df %>%
+  select(Region,CHW_Present ) %>% 
+  sjtab(fun = "xtab", var.labels=c("Region", "CHW_Present"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+  
+  
+```{r}
+df %>%
+  select(Gender,CHW_Present ) %>% 
+  sjtab(fun = "xtab", var.labels=c("Gender", "CHW_Present"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+  
+  
+```{r}
+df %>%
+  select(IIT,CHW_Present ) %>% 
+  sjtab(fun = "xtab", var.labels=c("IIT", "CHW_Present"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+
+
+```{r}
+df %>%
+  select(TXDuration,CHW_Present ) %>% 
+  sjtab(fun = "xtab", var.labels=c("TXDuration", "CHW_Present"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+
+
+```{r}
+df %>%
+  select(Current_CLIENTAGE,CHW_Present ) %>% 
+  sjtab(fun = "xtab", var.labels=c("Current_CLIENTAGE", "CHW_Present"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+
+
+```{r}
+df %>%
+  select(Current_ARV_Deivery_Model,CHW_Present ) %>% 
+  sjtab(fun = "xtab", var.labels=c("Current_ARV_Deivery_Model", "CHW_Present"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+
+```
+  
+```{r}
+df %>%
+  select(TimewHIV,CHW_Present ) %>% 
+  sjtab(fun = "xtab", var.labels=c("TimewHIV", "CHW_Present"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+  
+  
+  
+```{r}
+logit.fit_3 = glm(VLC ~ Current_CLIENTAGE + VLS + Region + IIT + TXDuration + MMD_last_visit + Current_ARV_Deivery_Model + TimewHIV,  data = df, family = "binomial")
+summary(logit.fit_3)
+```
+  
+```{r}
+cbind(exp(coefficients(logit.fit_3)), exp(confint(logit.fit_3)))
+```
+  
+
+
+
+```{r}
+df %>%
+  select(Current_CLIENTAGE, IIT) %>% 
+  sjtab(fun = "xtab", var.labels=c("Current_CLIENTAGE", "IIT"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+
+
+```{r}
+df %>%
+  select(Gender, IIT) %>% 
+  sjtab(fun = "xtab", var.labels=c("Gender", "IIT"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+  
+  
+  
+```{r}
+df %>%
+  select(TXDuration, IIT) %>% 
+  sjtab(fun = "xtab", var.labels=c("TXDuration", "IIT"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+  
+  
+  
+```{r}
+df %>%
+  select(VLS, IIT) %>% 
+  sjtab(fun = "xtab", var.labels=c("VLS", "IIT"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+ 
+ 
+
+```{r}
+df %>%
+  select(MMD_last_visit, IIT) %>% 
+  sjtab(fun = "xtab", var.labels=c("MMD_last_visit", "IIT"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+  
+  
+```{r}
+df %>%
+  select(CHW_Present, IIT) %>% 
+  sjtab(fun = "xtab", var.labels=c("CHW_Present", "IIT"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+  
+```{r}
+df %>%
+  select(Current_ARV_Deivery_Model, IIT) %>% 
+  sjtab(fun = "xtab", var.labels=c("Current_ARV_Deivery_Model", "IIT"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+  
+```
+  
+```{r}
+df %>%
+  select(TimewHIV,IIT) %>% 
+  sjtab(fun = "xtab", var.labels=c("TimewHIV", "IIT"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+  
+```{r}
+df %>%
+  select(Region, IIT) %>% 
+  sjtab(fun = "xtab", var.labels=c("Region", "IIT"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+```
+  
+
+```{r}
+df %>%
+  select(Preferred_DSD, IIT) %>% 
+  sjtab(fun = "xtab", var.labels=c("Preferred_DSD", "IIT"),
+        show.row.prc=T, show.col.prc=T, show.summary=T, show.exp=T, show.legend=T)
+
+```
+
+df
+  
+```{r}
+logit.fit_4 = glm(IIT ~ Current_CLIENTAGE + VLS + Region +VLC + TXDuration + MMD_last_visit + Current_ARV_Deivery_Model+ TimewHIV,  data = df, family = "binomial")
+summary(logit.fit_4)
+```
+```{r}
+cbind(exp(coefficients(logit.fit_4)), exp(confint(logit.fit_4)))
+```
+Corrplot 
+```{r}
+model.matrix(~ 0+., data=df) %>% 
+  cor(use="pairwise.complete.obs") %>% 
+  ggcorrplot(show.diag = F, type="lower", lab=TRUE, lab_size=2)
+```
+
+
+```{r}
+mixed_assoc = function(df, cor_method="spearman", adjust_cramersv_bias=TRUE){
+    df_comb = expand.grid(names(df), names(df),  stringsAsFactors = F) %>% set_names("X1", "X2")
+
+    is_nominal = function(x) class(x) %in% c("factor", "character")
+    # https://community.rstudio.com/t/why-is-purr-is-numeric-deprecated/3559
+    # https://github.com/r-lib/rlang/issues/781
+    is_numeric <- function(x) { is.integer(x) || is_double(x)}
+
+    f = function(xName,yName) {
+        x =  pull(df, xName)
+        y =  pull(df, yName)
+
+        result = if(is_nominal(x) && is_nominal(y)){
+            # use bias corrected cramersV as described in https://rdrr.io/cran/rcompanion/man/cramerV.html
+            cv = cramerV(as.character(x), as.character(y), bias.correct = adjust_cramersv_bias)
+            data.frame(xName, yName, assoc=cv, type="cramersV")
+
+        }else if(is_numeric(x) && is_numeric(y)){
+            correlation = cor(x, y, method=cor_method, use="complete.obs")
+            data.frame(xName, yName, assoc=correlation, type="correlation")
+
+        }else if(is_numeric(x) && is_nominal(y)){
+            # from https://stats.stackexchange.com/questions/119835/correlation-between-a-nominal-iv-and-a-continuous-dv-variable/124618#124618
+            r_squared = summary(lm(x ~ y))$r.squared
+            data.frame(xName, yName, assoc=sqrt(r_squared), type="anova")
+
+        }else if(is_nominal(x) && is_numeric(y)){
+            r_squared = summary(lm(y ~x))$r.squared
+            data.frame(xName, yName, assoc=sqrt(r_squared), type="anova")
+
+        }else {
+            warning(paste("unmatched column type combination: ", class(x), class(y)))
+        }
+
+        # finally add complete obs number and ratio to table
+        result %>% mutate(complete_obs_pairs=sum(!is.na(x) & !is.na(y)), complete_obs_ratio=complete_obs_pairs/length(x)) %>% rename(x=xName, y=yName)
+    }
+
+    # apply function to each variable combination
+    map2_df(df_comb$X1, df_comb$X2, f)
+}
+```
+
+
+```{r}
+mixed_assoc(df)
+```
+```{r}
+view(mixed_assoc)
+
+```
+
+
+
+
+ 
