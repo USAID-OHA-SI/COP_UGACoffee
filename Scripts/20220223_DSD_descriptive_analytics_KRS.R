@@ -16,6 +16,7 @@ library(scales)
 library(tidytext)
 library(glue)
 library(janitor)
+library(ggtext)
 
 # IMPORT AND GLOBALS  ------------------------------------------------------------
 
@@ -115,4 +116,42 @@ df <- si_path() %>%
  
  #DESCRIPTIVE ANALYTICS ---------------------------------------------------
  
-
+ #  What is the frequency of survey participants ?
+ 
+ ggplot(df_clean) +
+   geom_bar(mapping = aes(x = gender))
+ 
+ df_clean %>% count(gender, age_group) %>%
+   filter(!is.na(gender) & !is.na(age_group)) %>% 
+   mutate(fill_color = ifelse(gender == "Male", genoa, moody_blue)) %>% 
+   ggplot(aes(x = age_group, y = ifelse(gender == "Male", -n, n), fill = fill_color), na.rm = TRUE) +
+   geom_bar(stat = "identity") +
+   geom_text(aes(label = n, hjust = ifelse(gender == "Male", 1.2, -.4)),
+             family = "Source Sans Pro", size = 4, color = "#505050") +
+   coord_flip() + 
+   scale_fill_identity() +
+   si_style_nolines() +
+     labs(x = NULL, y = NULL,
+          title = "The patient cohort comprises of more <span style = 'color:#8980cb'>women</span> than  <span style = 'color:#287c6f'>men</span> and mostly patients over the age of 50",
+          subtitle = "Uganda COP22 DSD Analysis | USAID",
+          caption = "Source: DSD Patient Reference Export, 16 Feb 2022") + 
+   theme(legend.position = "none",
+         panel.grid.major.y = element_blank(),
+         axis.text.x = element_blank(),
+         plot.title = element_markdown()
+   )
+ 
+ si_save("COP22_UGA_survey-participants-age-sex.png", path = "Images")
+ 
+ #  What is ITT, VLC, VLS results/% for ped vs Adult 
+ #  What is ITT result by factors ( region, sex. age group etc )?
+ #  What is  VLC result by factors ( region, sex. age group etc )?
+ #  What is VLS result by factors ( region, sex. age group etc )?
+ #  What is the most preferred method of ARV dispensation?
+ #  How many patients are receiving  their ARVs  through their most prefered method of ARV dispensation?
+ 
+ 
+ 
+ 
+ 
+ 
