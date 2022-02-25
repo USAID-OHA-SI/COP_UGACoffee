@@ -122,7 +122,8 @@ df <- si_path() %>%
    geom_bar(mapping = aes(x = gender))
  
  df_clean %>% count(gender, age_group) %>%
-   filter(!is.na(gender) & !is.na(age_group)) %>% 
+   drop_na() %>% 
+   #filter(!is.na(gender) & !is.na(age_group)) %>% 
    mutate(fill_color = ifelse(gender == "Male", genoa, moody_blue)) %>% 
    ggplot(aes(x = age_group, y = ifelse(gender == "Male", -n, n), fill = fill_color), na.rm = TRUE) +
    geom_bar(stat = "identity") +
@@ -144,13 +145,77 @@ df <- si_path() %>%
  si_save("COP22_UGA_survey-participants-age-sex.png", path = "Images")
  
  #  What is ITT, VLC, VLS results/% for ped vs Adult 
- #  What is ITT result by factors ( region, sex. age group etc )?
+ 
+ #removed missing values
+ df_iit_prct <- df_clean %>% 
+   count(gender, age_group, missed_appt) %>% drop_na() %>% 
+   pivot_wider(names_from = missed_appt, values_from = n) %>% 
+   mutate(total = No + Yes,
+          IIT = Yes / total,
+          fill_color = ifelse(gender == "Male", genoa, moody_blue))
+ 
+ df_iit_prct %>% 
+   ggplot(aes(IIT, age_group)) +
+   geom_path(color = "gray50") +
+   geom_point(aes(size = total), fill = "white") +
+   geom_point(aes(size = total, fill = gender, color = "white"), shape = 21) +
+   geom_text(aes(label = percent(IIT, 1)), family = "Source Sans Pro", 
+             color = trolley_grey, hjust = -0.8, na.rm = TRUE) +
+   scale_fill_manual(values = c("Male" = genoa, "Female" = moody_blue)) +
+   scale_color_identity() +
+   scale_x_continuous(label = percent) +
+   scale_size_continuous(range = c(3, 10)) +
+   #expand_limits(x = 1) +
+   si_style_xgrid() +
+   labs(y = NULL,
+        title = "Share of patients with missed appointments in the last 12 months, across age and sex",
+        subtitle = "Uganda COP22 DSD Analysis | USAID",
+        caption = "Estimated IIT Proxy = Missed appointment in the last 12 months
+           Source: DSD Patient Reference Export, 16 Feb 2022"
+   ) +
+   theme(
+         panel.grid.major.y = element_blank(),
+         axis.text.x = element_blank(),
+         plot.title = element_markdown()
+   )
+ 
+ si_save("COP22_UGA_itt-share1.svg", path = "Graphics")
+ 
+   
+ 
+ x#  What is ITT result by factors ( region, sex. age group etc )?
  #  What is  VLC result by factors ( region, sex. age group etc )?
  #  What is VLS result by factors ( region, sex. age group etc )?
  #  What is the most preferred method of ARV dispensation?
  #  How many patients are receiving  their ARVs  through their most prefered method of ARV dispensation?
  
+ ggplot(df_clean) +
+   geom_bar(mapping = aes(x = preferred_DSD))
  
+ df_clean %>% 
+   filter(is_current_mode_preferred == "No") %>% 
+   ggplot() +
+   geom_bar(mapping = aes(x = preferred_DSD))
+ 
+ #  How do the clinical health outcomes differ by age group( Peds and Adults)
+ 
+ mosaicplot(age_group ~ vls ,data = df_clean)
+ mosaicplot(agecoarse ~ vls ,data = df_clean)
+ 
+ #  How do clinical outcomes differ by current method of ARV dispensation?
+ #  how does IIT differ by region and by age?
+ 
+ df_clean %>% 
+   ggplot(aes(region, missed_appt)) + 
+   geom_col() + 
+   scale_y_continuous(labels = label_number_si())
+ 
+ ggplot(df_clean) +
+   geom_bar(mapping = aes(x = region, y = missed_appt))
+ 
+ 
+ df_clean %>% 
+   count(gender, MMDfreq_last_visit)
  
  
  
