@@ -1,6 +1,6 @@
 ## PROJECT: COP_UGA
 ## AUTHOR:  K. Srikanth | USAID
-## PURPOSE: DSD Analysis - descriptive analysis viz
+## PURPOSE: DSD Analysis - descriptive analysis tidying
 ## LICENSE: MIT
 ## DATE:    2022-02-23
 
