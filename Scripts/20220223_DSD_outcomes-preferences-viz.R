@@ -72,6 +72,55 @@ df_preference %>%
 
 si_save("Graphics/dsd-preference-waffle.svg")
 
+# How about by sex?
+#  How many people were in preferred ARV Disp? ---------
+
+df_preference <- df_clean %>% 
+  count(is_current_mode_preferred, gender) %>% drop_na() %>% 
+  pivot_wider(names_from = is_current_mode_preferred, values_from = n) %>% 
+  mutate(total = No + Yes,
+         preferred = Yes / total,
+         not_preferred = No/total) %>% 
+  pivot_longer(cols = c(preferred, not_preferred), names_to = "preference") %>% 
+  mutate(value = round(value * 100))
+
+
+df_preference <- df_preference %>% 
+  mutate(sex_color = ifelse(gender == "Female", moody_blue, genoa),
+         fill_color = ifelse(preference == "not_preferred", trolley_grey_light, sex_color),
+         val_lab = glue("Current ARV Method = Preferred ARV Method\n(n) - {(Yes)}\nTotal -{(total)}"),
+         num_lab = ifelse(preference == "preferred", glue("{value}%"), NA))
+
+
+
+df_preference %>%
+  #filter(fundingagency == "USAID") %>% 
+  ggplot(aes(fill = fill_color, values = value)) +
+  geom_waffle(color = "white", size = 1, n_rows = 10, flip = TRUE, make_proportional = TRUE) +
+  geom_text(aes(x = 5, y  = 12, label = val_lab, color = sex_color),
+            family = "Source Sans Pro SemiBold", size = 14/.pt) +
+  geom_text(aes(x = 5, y  = 11, label = num_lab, color = sex_color),
+            family = "Source Sans Pro SemiBold", size = 20/.pt) +
+  #  facet_wrap(~region, nrow = 1, strip.position = "bottom") +
+  facet_wrap(~fct_reorder(gender, value,min), nrow = 1, strip.position = "bottom") +
+  expand_limits(y = 14) +
+  scale_x_discrete() +
+  scale_y_continuous(labels = function(x) x * 10, # make this multiplyer the same as n_rows
+                     expand = c(0,0)) +
+  scale_fill_identity() +
+  scale_color_identity() +
+  scale_alpha_identity() +
+  coord_equal() +
+  labs(x= NULL, y = NULL,
+       title = "Across both male and female participants, 75% of participants in the sample are currently in their preferred model of ARV dispensing") +
+  si_style_nolines() +
+  theme(axis.text.y = element_blank(),
+        strip.text.x = element_text(hjust = .5),
+        panel.spacing = unit(1, "pt")) +
+  guides(fill = guide_legend(reverse = TRUE))
+
+si_save("Graphics/dsd-preference-waffle-by-sex.svg")
+
 # Of those currently on preferred, what is current ARV?
 
 nudge_space <- 0.125 #set nudge for offset bars
