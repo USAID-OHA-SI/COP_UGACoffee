@@ -55,6 +55,8 @@ df$is_current_mode_preferred <-
  label(df$CHW_present)          <- "Community Health worker Present"
  label(df$preferred_DSD)          <- "Preferred ARV Mode"
  label(df$is_current_mode_preferred)          <- "ARV Mode Preference"
+ label(df$current_age)          <- "Age"
+ 
  #Table 1
 # 
 #  df$gender <- 
@@ -79,8 +81,14 @@ df$is_current_mode_preferred <-
 #  label(df$vls)        <- "Viral load Suppression"
 
 #Table 1 -demographics
-table1(~ agecoarse + agecoarse + gender + region + missed_appt
-+ current_arv_mode + is_current_mode_preferred + vls, data = df, caption = "Table 1: Baseline Cohort Demographics")
+table1(~  current_age + agecoarse + gender + region + missed_appt
++ current_arv_mode + is_current_mode_preferred + vls, data = df,
+footnote = "CCLAD =Community Client-Led ART delivery,
+       CDDP = Community Drug Distribution Points,
+       FBG = Facility Based Group,
+       FBIM = Facility Based Individual Management,
+       FTDR = Fast-Track Drug Refills",
+caption = "Table 1: Baseline Cohort Demographics")
 
 
 #filter out missing values
