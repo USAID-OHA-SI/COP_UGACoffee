@@ -6,32 +6,32 @@
 # UPDATED: 
 
 # DEPENDENCIES ------------------------------------------------------------
-  
-  library(glamr)
-  library(tidyverse)
-  library(glitr)
-  library(gophr)
-  library(extrafont)
-  library(scales)
-  library(tidytext)
-  library(patchwork)
-  library(ggtext)
-  library(glue)
-  library(readxl)
-  library(googlesheets4)
-  
+
+library(glamr)
+library(tidyverse)
+library(glitr)
+library(gophr)
+library(extrafont)
+library(scales)
+library(tidytext)
+library(patchwork)
+library(ggtext)
+library(glue)
+library(readxl)
+library(googlesheets4)
+
 
 # GLOBAL VARIABLES --------------------------------------------------------
-  
-  ref_id <- "9acb8460"
-  today <- lubridate::today()
-  
+
+ref_id <- "9acb8460"
+today <- lubridate::today()
+
 
 # IMPORT ------------------------------------------------------------------
-  #Run tidying script and save to /Dataout folder
-  
-  df_clean <- read_csv("Dataout/20220223-DSD-preference-clean.csv")
-  
+#Run tidying script and save to /Dataout folder
+
+df_clean <- read_csv("Dataout/20220223-DSD-preference-clean.csv")
+
 
 # MUNGE -------------------------------------------------------------------
 
@@ -42,8 +42,10 @@
 library(waffle)
 
 df_preference_iit <- df_clean %>% 
-  filter(gender == "Female") %>% 
-  count(is_current_mode_preferred, missed_appt) %>% drop_na() %>% 
+  filter(!is.na(vls),
+         !is.na(missed_appt)) %>% 
+  #filter(gender == "Female") %>% 
+  count(is_current_mode_preferred, missed_appt) %>%
   pivot_wider(names_from = missed_appt, values_from = n) %>% 
   mutate(total = No + Yes,
          IIT = Yes / total) %>%
@@ -60,7 +62,7 @@ df_preference_iit <- df_clean %>%
 viz_preference_itt <- df_preference_iit %>%
   #filter(fundingagency == "USAID") %>% 
   ggplot(aes(fill = fill_color, values = value)) +
-  geom_waffle(color = "white", size = 1, n_rows = 10, flip = TRUE) +
+  geom_waffle(color = "white", size = 1, n_rows = 10, flip = TRUE, na.rm = TRUE) +
   geom_text(aes(x = 5, y  = 12, label = percent(IIT, 1), color = scooter),
             family = "Source Sans Pro SemiBold", size = 14/.pt) +
   #  facet_wrap(~region, nrow = 1, strip.position = "bottom") +
@@ -83,8 +85,9 @@ viz_preference_itt <- df_preference_iit %>%
 
 #VLS
 preference_vls <- df_clean %>% 
-  filter(gender == "Female") %>%
-  count(is_current_mode_preferred, vls) %>% drop_na() %>% 
+  filter(!is.na(vls),
+         !is.na(missed_appt)) %>% 
+  count(is_current_mode_preferred, vls) %>%
   pivot_wider(names_from = vls, values_from = n) %>% 
   mutate(total = No + Yes,
          VLS = Yes / total) %>% 
@@ -101,7 +104,7 @@ preference_vls <- df_clean %>%
 viz_preference_vls <- preference_vls %>%
   #filter(fundingagency == "USAID") %>% 
   ggplot(aes(fill = fill_color, values = value)) +
-  geom_waffle(color = "white", size = 1, n_rows = 10, flip = TRUE) +
+  geom_waffle(color = "white", size = 1, n_rows = 10, flip = TRUE, na.rm = TRUE) +
   geom_text(aes(x = 5, y  = 12, label = percent(VLS, 1), color = moody_blue),
             family = "Source Sans Pro SemiBold", size = 14/.pt) +
   #  facet_wrap(~region, nrow = 1, strip.position = "bottom") +
@@ -117,7 +120,7 @@ viz_preference_vls <- preference_vls %>%
   labs(x= NULL, y = NULL,
        subtitle = "Share of participants with suppressed viral loads"
        #caption = glue("Source: DSD Patient Reference Export, 16 Feb 2022")
-       ) +
+  ) +
   si_style_nolines() +
   theme(axis.text.y = element_blank(),
         strip.text.x = element_text(hjust = .5),
@@ -143,7 +146,7 @@ preference_vlc <- df_clean %>%
 viz_preference_vlc <- preference_vlc %>%
   #filter(fundingagency == "USAID") %>% 
   ggplot(aes(fill = fill_color, values = value)) +
-  geom_waffle(color = "white", size = 1, n_rows = 10, flip = TRUE) +
+  geom_waffle(color = "white", size = 1, n_rows = 10, flip = TRUE, na.rm = TRUE) +
   geom_text(aes(x = 5, y  = 12, label = percent(VLC, 1), color = golden_sand),
             family = "Source Sans Pro SemiBold", size = 14/.pt) +
   #  facet_wrap(~region, nrow = 1, strip.position = "bottom") +
@@ -174,5 +177,4 @@ viz_preference_itt + viz_preference_vlc +viz_preference_vls +
 
 si_save(glue("Graphics/dsd-preference-by-outcomes-MEN-{today}.svg"))
 si_save(glue("Images/dsd-preference-by-outcomes-{today}.png"))
-
 
