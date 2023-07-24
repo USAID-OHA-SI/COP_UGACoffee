@@ -49,7 +49,7 @@ df_preference <- df_preference %>%
 df_preference %>%
   #filter(fundingagency == "USAID") %>% 
   ggplot(aes(fill = fill_color, values = value)) +
-  geom_waffle(color = "white", size = 1, n_rows = 10, flip = TRUE, make_proportional = TRUE) +
+  geom_waffle(color = "white", size = 1, n_rows = 10, flip = TRUE, make_proportional = TRUE, na.rm = TRUE) +
   geom_text(aes(x = 5, y  = 12, label = val_lab, color = golden_sand),
             family = "Source Sans Pro SemiBold", size = 14/.pt) +
   #  facet_wrap(~region, nrow = 1, strip.position = "bottom") +
@@ -96,7 +96,7 @@ df_preference <- df_preference %>%
 df_preference %>%
   #filter(fundingagency == "USAID") %>% 
   ggplot(aes(fill = fill_color, values = value)) +
-  geom_waffle(color = "white", size = 1, n_rows = 10, flip = TRUE, make_proportional = TRUE) +
+  geom_waffle(color = "white", size = 1, n_rows = 10, flip = TRUE, make_proportional = TRUE, na.rm = TRUE) +
   geom_text(aes(x = 5, y  = 12, label = val_lab, color = sex_color),
             family = "Source Sans Pro SemiBold", size = 14/.pt) +
   geom_text(aes(x = 5, y  = 11, label = num_lab, color = sex_color),
@@ -194,18 +194,18 @@ df_dsd_join %>%
   mutate(fill_color = ifelse(dsd %in% c("Facility-based individual management (FBIM)",
                                         "Facility-based group (FBG)"), scooter, genoa)) %>% 
   ggplot(aes(x = fct_reorder(dsd, preferred_n, .desc = TRUE))) +
-  geom_col(aes(y = current_n),fill = trolley_grey_light, alpha = 1, position = position_nudge(x = -nudge_space)) +
-  geom_col(aes(y = preferred_n, fill = fill_color), position = position_nudge(x = nudge_space)) +
+  geom_col(aes(y = current_share),fill = trolley_grey_light, alpha = 1, position = position_nudge(x = -nudge_space)) +
+  geom_col(aes(y = preferred_share, fill = fill_color), position = position_nudge(x = nudge_space)) +
   # geom_label(aes(y = 0, label = percent(share, 1), fill = share, 
   #                color = ifelse(share > 0.3, "white", grey90k)), 
   #            vjust = 1.3, 
   #            size = 10/.pt, 
   #            label.size = NA, family = "Source Sans Pro") +
-  geom_text(aes(y = current_n, label = percent(current_share, 1)), family = "Source Sans Pro",
+  geom_text(aes(y = current_share, label = percent(current_share, 1)), family = "Source Sans Pro",
             hjust = 1.5, vjust = -1, na.rm = TRUE) +
-  geom_text(aes(y = preferred_n, label = percent(preferred_share, 1)), family = "Source Sans Pro",
+  geom_text(aes(y = preferred_share, label = percent(preferred_share, 1)), family = "Source Sans Pro",
             hjust = 0, vjust = -1, na.rm = TRUE) +
-  #scale_y_continuous(labels = percent) +
+  scale_y_continuous(labels = percent, limits = c(0, .6)) +
   scale_fill_identity() +
   scale_color_identity() +
   si_style_ygrid() +
@@ -407,6 +407,8 @@ v1_vls + v2_vls + plot_annotation(
 )
 
 si_save("cop-22-vls-by-current-mode.svg", path = "Graphics")
+
+
 
 
 
