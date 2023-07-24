@@ -1,6 +1,7 @@
 #LIBRARIES ---------------------------------------
 
 library(tidyverse)
+library(flextable)
 # library(glamr)
 # library(glitr)
 # library(gophr)
@@ -40,18 +41,18 @@ df$missed_appt <-
 
 
 # ADd labels 
- label(df$vls)        <- "Viral load Suppression"
- label(df$gender)          <- "Sex"
- label(df$agecoarse)          <- "Age Category"
- label(df$region)          <- "Region"
- label(df$missed_appt)          <- "Missed Apointments in the last 12 months"
- label(df$current_arv_mode)          <- "Current ARV Mode"
- label(df$CHW_present)          <- "Community Health worker Present"
- label(df$preferred_DSD)          <- "Preferred ARV Mode"
- label(df$is_current_mode_preferred)          <- "ARV Mode Preference"
- label(df$current_age)          <- "Age"
- 
- #Table 1
+label(df$vls)        <- "Viral Load Suppression"
+label(df$gender)          <- "Sex"
+label(df$agecoarse)          <- "Age Category"
+label(df$region)          <- "Region"
+label(df$missed_appt)          <- "Missed Apointments in the last 12 months"
+label(df$current_arv_mode)          <- "Current ARV Mode"
+label(df$CHW_present)          <- "Community Health worker Present"
+label(df$preferred_DSD)          <- "Preferred ARV Mode"
+label(df$is_current_mode_preferred)          <- "ARV Mode Preference"
+label(df$current_age)          <- "Age"
+
+#Table 1
 # 
 #  df$gender <- 
 #    factor(df$gender,
@@ -75,15 +76,20 @@ df$missed_appt <-
 #  label(df$vls)        <- "Viral load Suppression"
 
 #Table 1 -demographics
-table1(~  current_age + agecoarse + gender + region + missed_appt
-+ current_arv_mode + is_current_mode_preferred + vls, data = df,
-footnote = "UPMB/LSDA refers to Uganda Protestant Medical Bureau Local Service Delivery for Health and HIV/AIDS Activity, a partner organization that was analyzed as a region because they work with all private not-for-profit institutions.",
-#"CCLAD =Community Client-Led ART delivery,
-#        CDDP = Community Drug Distribution Points,
-#        FBG = Facility Based Group,
-#        FBIM = Facility Based Individual Management,
-#        FTDR = Fast-Track Drug Refills",
-caption = "Table 1: Baseline Cohort Demographics")
+tbl1 <- table1(~  current_age + agecoarse + gender + region + missed_appt
+               + current_arv_mode + is_current_mode_preferred + vls, data = df,
+               footnote = "UPMB/LSDA refers to Uganda Protestant Medical Bureau Local Service Delivery for Health and HIV/AIDS Activity, a partner organization that was analyzed as a region because they work with all private not-for-profit institutions.",
+               #"CCLAD =Community Client-Led ART delivery,
+               #        CDDP = Community Drug Distribution Points,
+               #        FBG = Facility Based Group,
+               #        FBIM = Facility Based Individual Management,
+               #        FTDR = Fast-Track Drug Refills",
+               caption = "Table 1: Baseline Cohort Demographics")
+
+
+# Convert to flextable
+t1flex(tbl1) %>% 
+  save_as_docx(path="Images/table1.docx")
 
 
 
@@ -95,24 +101,32 @@ df1 <- df %>%
          !is.na(missed_appt))
 
 #Table 2 - outcomes by vls
-table1(~ agecoarse + gender  + is_current_mode_preferred + current_arv_mode | vls, data=df1,
-       row_wise = FALSE,
-       # footnote = "CCLAD =Community Client-Led ART delivery,
-       # CDDP = Community Drug Distribution Points,
-       # FBG = Facility Based Group,
-       # FBIM = Facility Based Individual Management,
-       # FTDR = Fast-Track Drug Refills",
-       caption = "Table 2: Viral Suppression Outcomes by by Demographic and Clinical Characteristics")
+tbl2 <- table1(~ agecoarse + gender  + is_current_mode_preferred + current_arv_mode | vls, data=df1,
+               row_wise = FALSE,
+               # footnote = "CCLAD =Community Client-Led ART delivery,
+               # CDDP = Community Drug Distribution Points,
+               # FBG = Facility Based Group,
+               # FBIM = Facility Based Individual Management,
+               # FTDR = Fast-Track Drug Refills",
+               caption = "Table 2: Viral Suppression Outcomes by by Demographic and Clinical Characteristics")
+
+# Convert to flextable
+t1flex(tbl2) %>% 
+  save_as_docx(path="Images/table2.docx")
 
 #Table 3 - outcomes by missed appts
-table1(~ agecoarse + gender +  is_current_mode_preferred + current_arv_mode | missed_appt, data=df1,
-       # footnote = "CCLAD =Community Client-Led ART delivery,
-       # CDDP = Community Drug Distribution Points,
-       # FBG = Facility Based Group,
-       # FBIM = Facility Based Individual Management,
-       # FTDR = Fast-Track Drug Refills",
-       caption = "Table 3: Missed Appointment Outcomes (in the last 12 months) by Demographic and Clinical Characteristics")
-  
+tbl3 <- table1(~ agecoarse + gender +  is_current_mode_preferred + current_arv_mode | missed_appt, data=df1,
+               # footnote = "CCLAD =Community Client-Led ART delivery,
+               # CDDP = Community Drug Distribution Points,
+               # FBG = Facility Based Group,
+               # FBIM = Facility Based Individual Management,
+               # FTDR = Fast-Track Drug Refills",
+               caption = "Table 3: Missed Appointment Outcomes (in the last 12 months) by Demographic and Clinical Characteristics")
+
+
+# Convert to flextable
+t1flex(tbl3) %>% 
+  save_as_docx(path="Images/table3.docx")
 
 # tab1 <-furniture::table1(data = df, ~ agecoarse + gender +  is_current_mode_preferred + current_arv_mode | ,
 #        row_wise = TRUE)
