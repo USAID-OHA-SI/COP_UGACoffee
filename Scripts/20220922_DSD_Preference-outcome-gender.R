@@ -178,3 +178,4 @@ viz_preference_itt + viz_preference_vlc +viz_preference_vls +
 si_save(glue("Graphics/dsd-preference-by-outcomes-MEN-{today}.svg"))
 si_save(glue("Images/dsd-preference-by-outcomes-{today}.png"))
 
+
